@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href={{url_for('static', filename='css/normalize.css')}}>
+    <link rel="stylesheet" href={{url_for('static', filename='css/grid.css')}}>
+    <link rel="stylesheet" href={{url_for('static', filename='css/style.css')}}>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;1,300&display=swap"
+        rel="stylesheet" type='text/css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    <link href="../static/images/testlogo.jpg" rel="icon" type="image/x-icon">
+    <title>TireSmart: Automated Detection and Analysis</title>
+    <meta name="keywords" content="custom file input, styling, label, cross-browser, accessible, input type file" />
+
+    <style>
+        .content {
+            max-width: 800px;
+            margin: auto;
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            flex-direction: column;
+        }
+
+        .bg-img {
+            width: 100%;
+            height: 100vh;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.71), rgba(0, 0, 0, 0.7)),
+                url('static/images/testlogo.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .heading {
+            font-family: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+            color: rgb(3, 9, 15);
+            font-size: 30px;
+            display: flex;
+            align-self: center;
+            margin-left: 50px;
+        }
+
+        .upload {
+            background: #92ccc4;
+            border: none;
+            padding: 10px;
+            color: black;
+            cursor: pointer;
+        }
+
+        .upload:hover {
+            background-color: #76b0a2;
+        }
+
+        .loading {
+            display: none;
+            margin-left: 15vh;
+        }
+
+        .table {
+            width: 100%;
+            background-color: #fff;
+            border-collapse: collapse;
+            display: none; /* Hidden initially */
+        }
+
+        .table th, .table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table td {
+            color: #333;
+        }
+
+        .header-content h1 {
+            color: white;
+            font-size: 32px;
+            text-align: center;
+        }
+
+        .header-content-sub p {
+            color: white;
+            text-align: center;
+        }
+
+        .preview-img {
+            max-width: 100%;
+            height: auto;
+            display: none;
+            padding-bottom:1vh;
+        }
+        #retry
+        {
+             display:none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pagewrap" data-nav="home">
+        <header id="header">
+            <div id="header-center" style="margin-left:45vh;">
+                <nav>
+                    <ul id="main-nav">
+                        <p class="heading">TireSmart: Automated Detection and Analysis</p>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+    </div>
+
+    <div class="bg-img">
+        <div class="content">
+            <div class="index-main">
+                <div style="width: 100%;">
+                    <div class="header-content">
+                        <h1><span class="header-content-text">Determine The Tire Defect</span></h1>
+                    </div>
+                </div>
+
+                <div class="upload-section">
+                    <div class="upload-file" id="fileUpload" style="margin-left:15vh;">
+                        <form id="upload-form" class="file-form" action="/predict" method="post" enctype="multipart/form-data">
+                            <input id="file-input" class="file-form-input" type="file" name="file" accept="image/*">
+                        </form>
+                        <br>
+                        <button id="upload-btn" class="btn btn-lg upload">Upload</button>
+                        <br>
+                        <div class="loading" style="color:#fff;padding:10vh;font-size:3vh;">
+                            <i class="fas fa-spinner fa-spin"></i> Uploading...
+                        </div>
+                    </div>
+                    <div class="header-content-sub" id="StatusS" style="padding-top:3vh;">
+                        <p class="header-content-info">Upload the image of the Tire which is affected.</p>
+                    </div>
+                    <div style="margin-left:15vh;width:130vh;" id="retry">
+                        <button class="btn btn-lg upload" onclick="location.reload();">TRY On Another Image</button>
+                    </div>
+                    <br>
+                    <img id="preview-img" class="preview-img" alt="Uploaded tire image" style="width:300px;height:300px;margin: auto;" />
+                </div>
+            </div>
+            <div>
+                <table id="defect-table" class="table">
+                    <thead>
+                        <tr>
+                            <th>Defect Type</th>
+                            <th>Life Expectancy</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="defect-details">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('upload-btn').addEventListener('click', function () {
+            const form = document.getElementById('upload-form');
+            const formData = new FormData(form);
+            const fileInput = document.getElementById('file-input');
+            const loadingSpinner = document.querySelector('.loading');
+            const previewImage = document.getElementById('preview-img');
+            const defectTable = document.getElementById('defect-table');
+            const defectDetails = document.getElementById('defect-details');
+            const fileUpload=document.getElementById("fileUpload");
+            const StatusS=document.getElementById("StatusS");
+            const retry=document.getElementById("retry");
+            
+            
+
+            if (!fileInput.files.length) {
+                alert('Please select an image to upload.');
+                return;
+            }
+
+            loadingSpinner.style.display = 'inline-block';
+            previewImage.style.display = 'none';
+            defectTable.style.display = 'none'; 
+
+            fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    loadingSpinner.style.display = 'none'; 
+                    previewImage.src = URL.createObjectURL(fileInput.files[0]);
+                    previewImage.style.display = 'block';                    
+                    let rows = `<tr>
+                            <td>${data.status}</td>
+                            <td>${data.life_expectancy}</td>
+                            <td>${data.description}</td>
+                        </tr>`;
+
+                        console.log(rows);
+                    defectDetails.innerHTML = rows;
+                    defectTable.style.display = 'table'; 
+                    fileUpload.style.display="none";
+                    StatusS.style.display="none";
+                    retry.style.display="block";
+                })
+                .catch(error => {
+                    loadingSpinner.style.display = 'none';
+                    alert('Error uploading image. Please try again.');
+                });
+        });
+    </script>
+</body>
+
+</html>
